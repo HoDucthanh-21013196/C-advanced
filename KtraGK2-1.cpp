@@ -3,7 +3,6 @@
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
 using namespace std;
 
 struct IMDB
@@ -27,6 +26,11 @@ vector<IMDB> docFile(string path)
     vector<IMDB> imdb;
     ifstream inFile;
     inFile.open(path);
+    if (!inFile.is_open())
+    {
+        cout << "Khong the mo file";
+        exit(0);
+    }
     string line;
     getline(inFile, line);
     while (getline(inFile, line))
@@ -77,21 +81,21 @@ vector<IMDB> docFile(string path)
     return imdb;
 }
 
-void print_directorName(vector<IMDB> &imdb, string &directorName)
+void inFile(vector<IMDB> &imdb, string &directorName)
 {
-    long total_movie = 0;
+    long total = 0;
     for (auto &im : imdb)
     {
         if (im.directors == directorName)
         {
             cout << im.rank << ", " << im.name << ", " << im.directors << endl;
-            total_movie += im.box_office;
+            total += im.box_office;
         }
     }
+    cout << total;
 }
 
-// Hàm chuyển đổi thành phút
-int toMinute(string run_time)
+int toHours(string run_time)
 {
     int hour_pos = run_time.find("h");
     int min_pos = run_time.find("m");
@@ -111,10 +115,10 @@ int toMinute(string run_time)
 int dem(vector<IMDB> &imdb, string run_time)
 {
     int dem = 0;
-    int target_minutes = toMinute(run_time);
+    int target_hours = toHours(run_time);
     for (auto &im : imdb)
     {
-        if (toMinute(im.run_time) >= target_minutes)
+        if (toHours(im.run_time) >= target_hours)
         {
             cout << im.rank << ", " << im.run_time << endl;
             dem++;
@@ -125,15 +129,17 @@ int dem(vector<IMDB> &imdb, string run_time)
 
 void outFile(vector<IMDB> imdb, string &actName)
 {
+    ofstream outFile;
+    outFile.open("output.txt");
     for (auto &im : imdb)
     {
         if (im.casts.find(actName) != string::npos)
         {
-            cout << im.rank << ", " << im.name << ", " << im.casts << endl
-                 << endl
-                 << endl;
+            outFile << im.rank << ", " << im.name << ", " << im.casts << endl
+                    << endl;
         }
     }
+    outFile.close();
 }
 
 int main(int argc, char *argv[])
@@ -143,8 +149,8 @@ int main(int argc, char *argv[])
         cout << "Invalid input";
         exit(0);
     }
-    string path, directorName, actName, run_time;
-    int run_time1 = toMinute(run_time);
+    string path, directorName, actName;
+    double run_time;
     for (int i = 1; i < argc; i++)
     {
         if (string(argv[i]) == string("-i"))
@@ -158,29 +164,20 @@ int main(int argc, char *argv[])
             while (string(argv[j + 1]) != string("-i") && string(argv[j + 1]) != string("-w") && string(argv[j + 1]) != string("-h"))
             {
                 directorName += " ";
-                directorName += string(argv[j + 1]);
+                directorName += argv[j + 1];
                 j++;
             }
         }
         if (string(argv[i]) == string("-w"))
         {
             actName = argv[i + 1];
-            int j = i + 1;
-            while (string(argv[j + 1]) != string("-i") && string(argv[j + 1]) != string("-p") && string(argv[j + 1]) != string("-h"))
-            {
-                actName += " ";
-                actName += string(argv[j + 1]);
-                j++;
-            }
         }
         if (string(argv[i]) == string("-h"))
         {
-            run_time1 = stoi(argv[i + 1]);
+            run_time = stod(argv[i + 1]);
         }
     }
     vector<IMDB> imdb = docFile(path);
-    // cout << directorName << endl;
-    // print_directorName(imdb, directorName);
-    // cout << dem(imdb, "2h 22m");
-    outFile(imdb, actName);
+    inFile(imdb, directorName);
+    int count = dem(imdb, to_string(run_time));
 }
